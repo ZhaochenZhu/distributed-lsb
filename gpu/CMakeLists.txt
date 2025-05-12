@@ -18,7 +18,7 @@ set(CMAKE_CUDA_ARCHITECTURES 70 80)
 enable_language(CUDA)
 
 # Find all radix_sort_*.cu files
-file(GLOB RADIX_SORT_SOURCES "radix_sort_*.cu")
+file(GLOB RADIX_SORT_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/radix_sort_*.cu")
 
 # Link against cuRAND
 find_package(CUDAToolkit REQUIRED)
@@ -41,3 +41,32 @@ foreach(src ${RADIX_SORT_SOURCES})
     # Install rule
     install(TARGETS ${target_name} RUNTIME DESTINATION bin)
 endforeach()
+
+# ----------------------------------------------------------------------------
+# Copy generate_timing_script.sh into the build dir and make it executable
+# ----------------------------------------------------------------------------
+
+# This custom command will copy the script from source → build and chmod +x it
+add_custom_command(
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generate_timing_script.sh"
+  COMMAND ${CMAKE_COMMAND} -E copy
+          "${CMAKE_CURRENT_SOURCE_DIR}/generate_timing_script.sh"
+          "${CMAKE_CURRENT_BINARY_DIR}/generate_timing_script.sh"
+  COMMAND ${CMAKE_COMMAND} -E chmod +x
+          "${CMAKE_CURRENT_BINARY_DIR}/generate_timing_script.sh"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/generate_timing_script.sh"
+  COMMENT "Copying generate_timing_script.sh into build directory"
+  VERBATIM
+)
+
+# Tie that command into an ALL target so it runs on 'make'
+add_custom_target(copy_generate_script ALL
+  DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/generate_timing_script.sh"
+  COMMENT "Ensuring generate_timing_script.sh is available in build/"
+)
+
+# Optionally install the helper script as well
+install(
+  PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/generate_timing_script.sh"
+  DESTINATION bin
+)
