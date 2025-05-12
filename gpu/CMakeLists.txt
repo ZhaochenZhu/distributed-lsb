@@ -13,31 +13,31 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Specify CUDA architectures (adjust this to your GPU)
-# Examples: 70 for Volta, 80 for Ampere
 set(CMAKE_CUDA_ARCHITECTURES 70 80)
 
 enable_language(CUDA)
 
-# Add the executables
-add_executable(radix_sort_multi radix_sort_multi.cu)
-add_executable(radix_sort_single radix_sort_single.cu)
+# Find all radix_sort_*.cu files
+file(GLOB RADIX_SORT_SOURCES "radix_sort_*.cu")
 
-# Allow separable compilation
-set_target_properties(radix_sort_multi PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-)
-set_target_properties(radix_sort_single PROPERTIES
-    CUDA_SEPARABLE_COMPILATION ON
-)
-
-# Link against cuRAND for random number generation
+# Link against cuRAND
 find_package(CUDAToolkit REQUIRED)
-if (CUDAToolkit_FOUND)
-  target_link_libraries(radix_sort_multi PRIVATE CUDA::cudart CUDA::curand)
-  target_link_libraries(radix_sort_single PRIVATE CUDA::cudart CUDA::curand)
-endif()
 
-# Installation rules (optional)
-install(TARGETS radix_sort_multi radix_sort_single
-    RUNTIME DESTINATION bin
-)
+foreach(src ${RADIX_SORT_SOURCES})
+    # Get the filename without extension
+    get_filename_component(target_name ${src} NAME_WE)
+
+    # Create executable
+    add_executable(${target_name} ${src})
+
+    # Set CUDA properties
+    set_target_properties(${target_name} PROPERTIES
+        CUDA_SEPARABLE_COMPILATION ON
+    )
+
+    # Link necessary CUDA libraries
+    target_link_libraries(${target_name} PRIVATE CUDA::cudart CUDA::curand)
+
+    # Install rule
+    install(TARGETS ${target_name} RUNTIME DESTINATION bin)
+endforeach()

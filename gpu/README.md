@@ -43,15 +43,20 @@ This project implements two versions of Radix Sort on GPU using CUDA:
    ```
 
 2. Once inside the node, run the executables. For example:
-
-   To run the scalable multi-threaded version:
+   
+   To run the single-threaded-per-key version (for n<128 only):
    ```bash
-   ./radix_sort_multi 1000000
+   ./radix_sort_single 100
    ```
 
-   To run the single-threaded-per-key version (for small inputs only):
+   To run the scalable multi-threaded baseline version:
    ```bash
-   ./radix_sort_single 1000
+   ./radix_sort_base 1000000
+   ```
+
+   To run the multi-threaded version with parallel prefix sum computation:
+   ```bash
+   ./radix_sort_ppsum 1000000
    ```
 
 ---
@@ -61,4 +66,4 @@ This project implements two versions of Radix Sort on GPU using CUDA:
 - Ensure you are on a GPU node before executing the program.
 - Adjust the input size argument as needed to test performance with different data sizes.
 - **radix_sort_single** is intended for small tests only due to its lack of scalability.
-- **radix_sort_multi** can handle much larger datasets effectively.
+- **radix_sort_base** can handle much larger datasets effectively.
