@@ -22,7 +22,7 @@ namespace cg = cooperative_groups;
 
 struct ShuffleTiming {
     double histogram_ms = 0;
-    double copyback_ms = 0;
+    double global_hist_ms = 0;
     double prefixsum_ms = 0;
     double offsets_ms = 0;
     double scatter_ms = 0;
@@ -147,7 +147,7 @@ void gpuShufflePerBlock(const T *d_in_keys, const T *d_in_vals, T *d_out_keys, T
 
     reduceHistogram<<<1, N_BUCKETS>>>(d_counts, d_global, blocks);
     cudaDeviceSynchronize();
-    auto t_copy = clk::now();
+    auto t_global_hist = clk::now();
 
     thrust::device_ptr<int> gptr(d_global);
     thrust::device_ptr<int> sptr(d_starts);
@@ -166,8 +166,8 @@ void gpuShufflePerBlock(const T *d_in_keys, const T *d_in_vals, T *d_out_keys, T
     auto t_scat = clk::now();
 
     timing.histogram_ms += std::chrono::duration<double, std::milli>(t_hist - t_start).count();
-    timing.copyback_ms  += std::chrono::duration<double, std::milli>(t_copy - t_hist).count();
-    timing.prefixsum_ms += std::chrono::duration<double, std::milli>(t_psum - t_copy).count();
+    timing.global_hist_ms += std::chrono::duration<double, std::milli>(t_global_hist - t_hist).count();
+    timing.prefixsum_ms += std::chrono::duration<double, std::milli>(t_psum - t_global_hist).count();
     timing.offsets_ms   += std::chrono::duration<double, std::milli>(t_off - t_psum).count();
     timing.scatter_ms   += std::chrono::duration<double, std::milli>(t_scat - t_off).count();
 }
@@ -222,7 +222,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Timing Breakdown (All Passes):\n";
     std::cout << "  Histogram: " << totalTiming.histogram_ms << " ms\n";
-    std::cout << "  Copyback: " << totalTiming.copyback_ms << " ms\n";
+    std::cout << "  Global Hist: " << totalTiming.global_hist_ms << " ms\n";
     std::cout << "  Prefix Sum: " << totalTiming.prefixsum_ms << " ms\n";
     std::cout << "  Calculate Offsets: " << totalTiming.offsets_ms << " ms\n";
     std::cout << "  Stable Scatter: " << totalTiming.scatter_ms << " ms\n";
